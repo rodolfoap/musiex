@@ -26,7 +26,9 @@ body {
   background: var(--bg);
   color: var(--fg);
   font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-  min-height: 100vh;
+  /* The page fills the screen exactly, so the tempo bar stays at the bottom. */
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -52,8 +54,6 @@ button {
 button:hover { border-color: var(--muted); }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; min-width: 84px; }
 button.link { background: none; border: none; color: var(--muted); text-decoration: underline; padding: 0; }
-.tempo { display: flex; align-items: center; gap: 8px; }
-.tempo output { min-width: 3.5em; font-variant-numeric: tabular-nums; }
 #settings-toggle { margin-left: auto; }
 .settings[hidden] { display: none; }
 .settings {
@@ -97,6 +97,53 @@ input:invalid { border-color: var(--accent); }
   display: none;
 }
 .system.current .cursor { display: block; }
+/* A full-width tempo slider with a large thumb, easy to drag on a tablet. */
+.tempo { border-top: 1px solid var(--line); flex-wrap: nowrap; gap: 16px; padding: 6px 16px; }
+.tempo span { font-weight: 600; }
+.tempo output { min-width: 4.5em; text-align: right; font-size: 18px; font-variant-numeric: tabular-nums; }
+#tempo {
+  --pct: 14%;
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: none;
+  cursor: pointer;
+}
+#tempo::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(to right, var(--accent) var(--pct), var(--line) var(--pct));
+}
+#tempo::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 36px;
+  height: 36px;
+  margin-top: -13px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+#tempo::-moz-range-track {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(to right, var(--accent) var(--pct), var(--line) var(--pct));
+}
+#tempo::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+#tempo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 .status { color: var(--muted); border-top: 1px solid var(--line); justify-content: space-between; }
 @media (max-width: 640px) {
   .bar { gap: 10px; }

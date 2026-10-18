@@ -19,11 +19,6 @@
       <button id="restart" title="Back to the start">Restart</button>
       <button id="new" title="A new exercise with the same settings (N)">New exercise</button>
     </div>
-    <label class="tempo">
-      <span>Tempo</span>
-      <input id="tempo" type="range" min="30" max="240" step="1">
-      <output id="tempo-value"></output>
-    </label>
     <button id="settings-toggle" aria-expanded="false" aria-controls="settings">Settings</button>
     <button id="install" title="Install musiex on this device; it then works offline" hidden>Install app</button>
   </header>
@@ -97,6 +92,12 @@
 
   <p id="error" class="error" role="alert" hidden></p>
   <main id="score" class="score" aria-label="Score"></main>
+
+  <label class="bar tempo">
+    <span>Tempo</span>
+    <input id="tempo" type="range" min="30" max="240" step="1">
+    <output id="tempo-value"></output>
+  </label>
 
   <footer class="bar status">
     <span id="where">Press Play to start.</span>
