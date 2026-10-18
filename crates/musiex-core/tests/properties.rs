@@ -11,7 +11,7 @@ fn variants() -> Vec<Settings> {
     let mut out = Vec::new();
     for (i, m) in meters.iter().enumerate() {
         for level in 1..=4 {
-            let all = i % 2 == 0;
+            let all = i.is_multiple_of(2);
             out.push(Settings {
                 meter: m.parse().unwrap(),
                 key: keys[(i + level as usize) % keys.len()].parse().unwrap(),

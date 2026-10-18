@@ -22,14 +22,14 @@ enum Slot {
 
 fn slots(events: &[Event], beat: Dur) -> Vec<Slot> {
     let mut out = Vec::new();
-    let mut onset = 0;
+    let mut onset: Dur = 0;
     for e in events {
         match e {
             Event::Note(_) => out.push(Slot::Plain {
-                on_beat: onset % beat == 0,
+                on_beat: onset.is_multiple_of(beat),
             }),
             Event::Rest(_) => out.push(Slot::Rest),
-            Event::Tuplet(t) => out.extend(std::iter::repeat(Slot::InTuplet).take(t.notes.len())),
+            Event::Tuplet(t) => out.extend(std::iter::repeat_n(Slot::InTuplet, t.notes.len())),
         }
         onset += e.dur();
     }

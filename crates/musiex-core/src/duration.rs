@@ -21,15 +21,15 @@ pub fn is_binary(d: Dur) -> bool {
         return false;
     }
     if d >= WHOLE {
-        d % WHOLE == 0 && (d / WHOLE).is_power_of_two()
+        d.is_multiple_of(WHOLE) && (d / WHOLE).is_power_of_two()
     } else {
-        WHOLE % d == 0 && (WHOLE / d).is_power_of_two()
+        WHOLE.is_multiple_of(d) && (WHOLE / d).is_power_of_two()
     }
 }
 
 /// A dotted note value: one and a half times a plain value.
 pub fn is_dotted(d: Dur) -> bool {
-    d % 3 == 0 && is_binary(d / 3 * 2)
+    d.is_multiple_of(3) && is_binary(d / 3 * 2)
 }
 
 /// Whether a single note head can show this duration (no ties needed).

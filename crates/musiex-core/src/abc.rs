@@ -51,11 +51,11 @@ fn pitch_name(p: Pitch) -> String {
     let octave = p.octave();
     if octave >= 5 {
         let mut s = letter.to_ascii_lowercase().to_string();
-        s.extend(std::iter::repeat('\'').take((octave - 5) as usize));
+        s.extend(std::iter::repeat_n('\'', (octave - 5) as usize));
         s
     } else {
         let mut s = letter.to_string();
-        s.extend(std::iter::repeat(',').take((4 - octave) as usize));
+        s.extend(std::iter::repeat_n(',', (4 - octave) as usize));
         s
     }
 }
@@ -123,7 +123,7 @@ pub fn bar(s: &Settings, bar: &Bar, last: bool) -> String {
                 (text, t.notes.iter().all(|n| n.dur < QUARTER))
             }
         };
-        let joined = i > 0 && beamable && prev_beamable && onset % beat != 0;
+        let joined = i > 0 && beamable && prev_beamable && !onset.is_multiple_of(beat);
         if i > 0 && !joined {
             out.push(' ');
         }
@@ -142,7 +142,7 @@ pub fn tune(s: &Settings, h: &Header, bars: &[Bar], bars_per_line: usize) -> Str
     for (i, b) in bars.iter().enumerate() {
         let last = i + 1 == bars.len();
         out.push_str(&bar(s, b, last));
-        out.push(if (i + 1) % per_line == 0 || last {
+        out.push(if (i + 1).is_multiple_of(per_line) || last {
             '\n'
         } else {
             ' '

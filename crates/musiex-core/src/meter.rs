@@ -32,7 +32,7 @@ impl Meter {
 
     /// 6/8, 9/8, 12/8...: beats are dotted and divide in three.
     pub fn is_compound(self) -> bool {
-        self.den >= 8 && self.num % 3 == 0 && self.num > 3
+        self.den >= 8 && self.num.is_multiple_of(3) && self.num > 3
     }
 
     /// The felt beat: a dotted value in compound meters, the lower number otherwise.
