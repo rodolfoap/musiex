@@ -55,6 +55,8 @@ pub struct NoteBox {
     /// Left edge of the notehead (or rest), in staff spaces.
     pub x: f32,
     pub rest: bool,
+    /// The sounding pitch; `None` for a rest.
+    pub pitch: Option<Pitch>,
 }
 
 #[derive(Debug, Clone)]
@@ -506,6 +508,7 @@ pub fn engrave_system(s: &Settings, bars: &[Bar], opt: &SystemOptions) -> System
             dur: sl.dur,
             x: sl.x,
             rest: sl.pitch.is_none(),
+            pitch: sl.pitch,
         });
         let note = Some(i);
         let Some(pitch) = sl.pitch else {

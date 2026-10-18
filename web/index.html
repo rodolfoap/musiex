@@ -24,6 +24,29 @@
   </header>
 
   <form id="settings" class="settings" hidden>
+    <fieldset class="presets">
+      <legend>Difficulty</legend>
+      <button type="button" data-preset="beginner">Beginner</button>
+      <button type="button" data-preset="easy">Easy</button>
+      <button type="button" data-preset="medium">Medium</button>
+      <button type="button" data-preset="hard">Hard</button>
+    </fieldset>
+    <fieldset>
+      <legend>Learning aids</legend>
+      <label>Note names
+        <select name="names">
+          <option value="off">Off</option><option value="letters">C D E</option>
+          <option value="solfege">Do Re Mi</option>
+        </select>
+      </label>
+      <label><input type="checkbox" name="keyboard"> Keyboard</label>
+      <label>Speed trainer
+        <select name="speedUp">
+          <option value="0">Off</option><option value="2">+2 bpm every 4 bars</option>
+          <option value="5">+5 bpm every 4 bars</option>
+        </select>
+      </label>
+    </fieldset>
     <fieldset>
       <legend>Music</legend>
       <label>Time
@@ -92,6 +115,7 @@
 
   <p id="error" class="error" role="alert" hidden></p>
   <main id="score" class="score" aria-label="Score"></main>
+  <div id="keyboard" class="keyboard" aria-hidden="true"></div>
 
   <label class="bar tempo">
     <span>Tempo</span>
