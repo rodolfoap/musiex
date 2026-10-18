@@ -134,7 +134,8 @@ impl Session {
     }
 
     /// Engraves the next system and schedules its audio. Returns JSON:
-    /// `{svg, height, startTick, endTick, notes: [{start, dur, x, rest}]}`
+    /// `{svg, height, startTick, endTick, notes: [{start, dur, x, rest, letter,
+    /// alter, key}]}`, where `letter` is 0 for C to 6 for B and `key` the MIDI key
     /// with ticks counted from the first bar and x in pixels.
     pub fn next_system(&mut self, width_px: f32, px_per_space: f32) -> String {
         while self.pending.len() < LOOKAHEAD_BARS {
@@ -172,6 +173,9 @@ impl Session {
                     "dur": nb.dur,
                     "x": nb.x * px_per_space,
                     "rest": nb.rest,
+                    "letter": nb.pitch.map(|p| p.letter()),
+                    "alter": nb.pitch.map(|p| p.alter),
+                    "key": nb.pitch.map(|p| p.midi()),
                 })
             })
             .collect();
@@ -253,6 +257,13 @@ impl Practice {
         f64::from(self.0.settings().meter.bar_len())
     }
 
+    /// The lowest and highest MIDI keys the exercise can use.
+    #[wasm_bindgen(js_name = keyRange)]
+    pub fn key_range(&self) -> Vec<i32> {
+        let s = self.0.settings();
+        vec![s.low.midi(), s.high.midi()]
+    }
+
     #[wasm_bindgen(js_name = beatTicks)]
     pub fn beat_ticks(&self) -> f64 {
         f64::from(self.0.settings().meter.beat())
@@ -293,6 +304,22 @@ mod tests {
         s.render(&mut l, &mut r);
         assert!((s.position() - -1920.0).abs() < 1.0);
         assert!(l.iter().any(|x| x.abs() > 0.01));
+    }
+
+    #[test]
+    fn notes_carry_names_and_keys() {
+        let mut s = session(r#"{"rests": true, "sharps": true, "flats": true}"#);
+        let (low, high) = (s.settings().low.midi(), s.settings().high.midi());
+        let v: serde_json::Value = serde_json::from_str(&s.next_system(900.0, 10.0)).unwrap();
+        for n in v["notes"].as_array().unwrap() {
+            if n["rest"].as_bool().unwrap() {
+                assert!(n["key"].is_null() && n["letter"].is_null());
+            } else {
+                let key = n["key"].as_i64().unwrap() as i32;
+                assert!((low - 1..=high + 1).contains(&key));
+                assert!(n["letter"].as_u64().unwrap() < 7);
+            }
+        }
     }
 
     #[test]

@@ -97,6 +97,43 @@ input:invalid { border-color: var(--accent); }
   display: none;
 }
 .system.current .cursor { display: block; }
+/* Note names under the staff, for learning to read. */
+.name {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--muted);
+  line-height: 1;
+  pointer-events: none;
+  display: none;
+}
+.score.show-names .name { display: block; }
+.name.playing { color: var(--accent); font-weight: 700; }
+/* A piano keyboard that lights the key being played. */
+.keyboard[hidden] { display: none; }
+.keyboard {
+  position: relative;
+  height: 76px;
+  margin: 10px 16px 8px;
+  flex: none;
+}
+.key { position: absolute; top: 0; border-radius: 0 0 5px 5px; transition: background 0.08s; }
+.key.white {
+  height: 100%;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  font-size: 11px;
+  color: #8a847a;
+}
+.key.white.octave span { font-weight: 700; color: #4a463f; }
+.key.black { height: 60%; background: #2a2725; z-index: 1; }
+.key.white.lit { background: var(--accent); color: #fff; border-color: var(--accent); }
+.key.white.lit span { color: #fff; }
+.key.black.lit { background: var(--accent); }
+.presets button { padding: 5px 12px; }
 /* A full-width tempo slider with a large thumb, easy to drag on a tablet. */
 .tempo { border-top: 1px solid var(--line); flex-wrap: nowrap; gap: 16px; padding: 6px 16px; }
 .tempo span { font-weight: 600; }

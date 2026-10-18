@@ -11,9 +11,28 @@ const DEFAULTS = {
   meter: '4/4', key: 'C', clef: 'treble', tempo: 60, level: 2, low: '', high: '',
   leap: 3, rests: false, triplets: false, dotted: false, ties: false, sharps: false,
   flats: false, seed: 0, metronome: true, countIn: 1, zoom: 10,
+  names: 'off', keyboard: true, speedUp: 0,
 };
-const NUMBERS = ['tempo', 'level', 'leap', 'seed', 'countIn', 'zoom'];
-const FLAGS = ['rests', 'triplets', 'dotted', 'ties', 'sharps', 'flats', 'metronome'];
+const NUMBERS = ['tempo', 'level', 'leap', 'seed', 'countIn', 'zoom', 'speedUp'];
+const FLAGS = ['rests', 'triplets', 'dotted', 'ties', 'sharps', 'flats', 'metronome', 'keyboard'];
+// Settings that only change what is shown, so the exercise keeps playing.
+const VIEW = ['names', 'keyboard', 'speedUp'];
+const SAVED = 'musiex-settings';
+
+// One tap sets the difficulty; meter, key and clef stay as chosen.
+const PRESETS = {
+  beginner: { level: 1, leap: 2, rests: false, triplets: false, dotted: false, ties: false, sharps: false, flats: false, tempo: 60 },
+  easy: { level: 2, leap: 2, rests: true, triplets: false, dotted: false, ties: false, sharps: false, flats: false, tempo: 70 },
+  medium: { level: 3, leap: 3, rests: true, triplets: false, dotted: true, ties: true, sharps: false, flats: false, tempo: 80 },
+  hard: { level: 4, leap: 5, rests: true, triplets: true, dotted: true, ties: true, sharps: true, flats: true, tempo: 90 },
+};
+// The speed trainer raises the tempo every this many bars.
+const SPEED_UP_BARS = 4;
+const MAX_TEMPO = 240;
+
+const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const SOLFEGE = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
+const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
 
 const BLOCK = 2048; // samples per audio block
 const AHEAD = 0.3; // seconds of audio scheduled ahead of the clock
@@ -35,6 +54,10 @@ let playing = false;
 let started = false;
 let pumpTimer = 0;
 let lastNote = null;
+let lastName = null;
+let lastKey = null;
+let lastBar = 0;
+let wakeLock = null;
 
 function randomSeed() {
   return Math.floor(Math.random() * 1000000);
@@ -43,6 +66,18 @@ function randomSeed() {
 function readHash() {
   const c = { ...DEFAULTS };
   const params = new URLSearchParams(location.hash.slice(1));
+  // Opened without settings in the link (as the installed app is): use the
+  // ones from last time.
+  if (![...params.keys()].length) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SAVED) || '{}');
+      for (const k of Object.keys(DEFAULTS)) {
+        if (k !== 'seed' && typeof saved[k] === typeof DEFAULTS[k]) c[k] = saved[k];
+      }
+    } catch {
+      // No storage (private window): start from the defaults.
+    }
+  }
   for (const [k, v] of params) {
     if (!(k in DEFAULTS)) continue;
     if (NUMBERS.includes(k)) c[k] = Number(v);
@@ -60,6 +95,11 @@ function writeHash() {
     params.set(k, typeof v === 'boolean' ? (v ? '1' : '0') : String(v));
   }
   history.replaceState(null, '', '#' + params.toString());
+  try {
+    localStorage.setItem(SAVED, JSON.stringify(config));
+  } catch {
+    // Not saved; the link still carries the settings.
+  }
 }
 
 function writeForm() {
@@ -113,6 +153,10 @@ async function reset() {
   current = -1;
   started = false;
   lastNote = null;
+  lastName = null;
+  lastKey = null;
+  lastBar = 0;
+  buildKeyboard();
   $('score').innerHTML = '';
   systems = [];
   fillScore();
@@ -124,6 +168,7 @@ async function reset() {
 
 function stopAudio() {
   playing = false;
+  keepAwake(false);
   clearInterval(pumpTimer);
   if (ctx) ctx.close();
   ctx = null;
@@ -152,8 +197,86 @@ function addSystem() {
   cursor.style.top = `${(STAFF_TOP - 1) * config.zoom}px`;
   cursor.style.height = `${6 * config.zoom}px`;
   el.appendChild(cursor);
+  // Note names, shown below the staff when switched on.
+  const names = data.notes.map((n) => {
+    if (n.letter === null) return null;
+    const span = document.createElement('span');
+    span.className = 'name';
+    span.dataset.letter = n.letter;
+    span.dataset.alter = n.alter;
+    span.textContent = noteName(n.letter, n.alter);
+    span.style.left = `${n.x + 0.6 * config.zoom}px`;
+    span.style.top = `${(STAFF_TOP + 7.4) * config.zoom}px`;
+    span.style.fontSize = `${Math.max(11, 1.3 * config.zoom)}px`;
+    el.appendChild(span);
+    return span;
+  });
   $('score').appendChild(el);
-  systems.push({ el, data, cursor });
+  systems.push({ el, data, cursor, names });
+}
+
+function noteName(letter, alter) {
+  const base = (config.names === 'solfege' ? SOLFEGE : LETTERS)[letter];
+  return base + (alter > 0 ? '♯' : alter < 0 ? '♭' : '');
+}
+
+/** Applies the settings that change only what is shown. */
+function applyView() {
+  $('score').classList.toggle('show-names', config.names !== 'off');
+  for (const span of $('score').querySelectorAll('.name')) {
+    span.textContent = noteName(Number(span.dataset.letter), Number(span.dataset.alter));
+  }
+  $('keyboard').hidden = !config.keyboard;
+  for (const key of $('keyboard').querySelectorAll('.white')) {
+    key.querySelector('span').textContent = noteName(Number(key.dataset.letter), 0);
+  }
+}
+
+// --- Piano keyboard ------------------------------------------------------
+
+/** Draws whole octaves of keys covering the exercise's range. */
+function buildKeyboard() {
+  const kb = $('keyboard');
+  kb.innerHTML = '';
+  const [low, high] = practice.keyRange();
+  const first = Math.floor(low / 12) * 12;
+  const last = Math.ceil((high + 1) / 12) * 12 - 1;
+  const whites = [];
+  for (let k = first; k <= last; k++) {
+    const letter = WHITE_SEMITONES.indexOf(k % 12);
+    if (letter >= 0) whites.push({ k, letter });
+  }
+  const width = 100 / whites.length;
+  whites.forEach(({ k, letter }, i) => {
+    const key = document.createElement('div');
+    key.className = 'key white';
+    key.dataset.key = k;
+    key.dataset.letter = letter;
+    key.style.left = `${i * width}%`;
+    key.style.width = `${width}%`;
+    const label = document.createElement('span');
+    label.textContent = noteName(letter, 0);
+    key.appendChild(label);
+    if (letter === 0) key.classList.add('octave');
+    kb.appendChild(key);
+    // A black key after C, D, F, G and A.
+    if ([0, 1, 3, 4, 5].includes(letter) && k + 1 <= last) {
+      const black = document.createElement('div');
+      black.className = 'key black';
+      black.dataset.key = k + 1;
+      black.style.left = `${(i + 1) * width - width * 0.3}%`;
+      black.style.width = `${width * 0.6}%`;
+      kb.appendChild(black);
+    }
+  });
+}
+
+function lightKey(midi) {
+  const key = midi === null ? null : $('keyboard').querySelector(`[data-key="${midi}"]`);
+  if (key === lastKey) return;
+  if (lastKey) lastKey.classList.remove('lit');
+  if (key) key.classList.add('lit');
+  lastKey = key;
 }
 
 function setCurrent(index) {
@@ -213,6 +336,7 @@ async function togglePlay() {
     playing = true;
     requestAnimationFrame(frame);
   }
+  keepAwake(playing);
   updatePlayButton();
 }
 
@@ -252,7 +376,36 @@ function follow(tick) {
   const frac = Math.min(1, Math.max(0, (tick - n.start) / n.dur));
   place(sys, i, frac);
   const bar = Math.floor(tick / practice.barTicks()) + 1;
+  if (bar !== lastBar) {
+    lastBar = bar;
+    if (config.speedUp && bar > 1 && (bar - 1) % SPEED_UP_BARS === 0) speedUp();
+  }
   $('where').textContent = `Bar ${bar} · seed ${config.seed}`;
+}
+
+/** The speed trainer: a little faster every few bars. */
+function speedUp() {
+  if (config.tempo >= MAX_TEMPO) return;
+  config.tempo = Math.min(MAX_TEMPO, config.tempo + config.speedUp);
+  $('tempo').value = config.tempo;
+  showTempo();
+  practice.setTempo(config.tempo);
+  writeHash();
+}
+
+/** Keeps the screen on while the music plays, where the device allows it. */
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && 'wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => (wakeLock = null));
+    } else if (!on && wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch {
+    // Refused (battery saver, hidden page): the screen just follows its own timeout.
+  }
 }
 
 /** Puts the cursor `frac` of the way from note `i` to the next one, and
@@ -268,12 +421,21 @@ function place(sys, i, frac) {
     if (g && !notes[i].rest) g.classList.add('playing');
     lastNote = g;
   }
+  const name = sys.names[i];
+  if (name !== lastName) {
+    if (lastName) lastName.classList.remove('playing');
+    if (name) name.classList.add('playing');
+    lastName = name;
+  }
+  lightKey(notes[i].key);
 }
 
 /** Scrolls finished systems away and engraves new ones at the bottom. */
 function turnTo(index) {
   if (lastNote) lastNote.classList.remove('playing');
   lastNote = null;
+  if (lastName) lastName.classList.remove('playing');
+  lastName = null;
   const gone = systems.splice(0, index);
   for (const s of gone) {
     s.el.classList.add('leaving');
@@ -300,10 +462,26 @@ $('tempo').addEventListener('input', (e) => {
   if (practice) practice.setTempo(config.tempo);
   writeHash();
 });
-form.addEventListener('change', () => {
+form.addEventListener('change', (e) => {
   if (!form.checkValidity()) return;
   readForm();
+  if (VIEW.includes(e.target.name)) {
+    applyView();
+    writeHash();
+    return;
+  }
   reset();
+});
+for (const button of form.querySelectorAll('[data-preset]')) {
+  button.addEventListener('click', () => {
+    Object.assign(config, PRESETS[button.dataset.preset]);
+    writeForm();
+    reset();
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  // The browser drops the wake lock when the page is hidden.
+  if (document.visibilityState === 'visible' && playing) keepAwake(true);
 });
 form.addEventListener('submit', (e) => e.preventDefault());
 $('settings-toggle').addEventListener('click', () => {
@@ -363,4 +541,5 @@ window.addEventListener('resize', () => {
 
 await init();
 writeForm();
+applyView();
 reset();

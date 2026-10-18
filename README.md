@@ -19,6 +19,12 @@ and adds a practice screen that never runs out of music.
 - **All controls on one screen.** Play, pause, restart, a new exercise, and a
   tempo slider that works while playing. Space plays and pauses, N starts a
   new exercise.
+- **Made for beginners too.** One-tap difficulty presets, optional note
+  names under the notes (C D E or Do Re Mi), a piano keyboard that lights up
+  the key being played, and a speed trainer that raises the tempo a little
+  every four bars.
+- **Practice-friendly.** The screen stays on while the music plays, and the
+  installed app remembers your settings.
 - **Shareable exercises.** Settings and seed live in the link, so the same
   link always gives the same music.
 - **Real engraving.** A small engraver written for musiex draws noteheads,
@@ -30,6 +36,8 @@ and adds a practice screen that never runs out of music.
   ties only land where a reader expects them.
 - **Command line tool.** Write ABC notation, MIDI with a metronome track,
   WAV audio, or an MP4 video of the scrolling score.
+
+![Note names under the notes and a piano keyboard lighting the key being played](docs/images/learning-aids.png)
 
 <table>
 <tr>
@@ -65,6 +73,8 @@ picks up new versions by itself.
 
 | Setting | Choices |
 | --- | --- |
+| Difficulty | Beginner, Easy, Medium, Hard (sets the options below in one tap) |
+| Learning aids | note names (off, C D E, Do Re Mi), keyboard, speed trainer (+2 or +5 bpm every 4 bars) |
 | Time | 2/4, 3/4, 4/4, 5/4, 2/2, 3/8, 6/8, 9/8, 12/8, 7/8 |
 | Key | 12 major and 9 minor keys, from six sharps to five flats |
 | Clef | treble, bass, alto, tenor |
