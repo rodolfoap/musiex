@@ -70,3 +70,21 @@ jobs:
           python3 -m http.server -d web 8000 &
           sleep 1
           node tools/web-smoke.js http://localhost:8000/
+
+  video:
+    # Renders a short exercise to MP4 with the real ffmpeg.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Render and inspect a video
+        run: |
+          cargo run --release -p musiex-cli -- video -n 4 -t 120 --size 640x360 -s 7 -o out.mp4
+          ffprobe -v error -show_entries stream=codec_name,width,height -of csv=p=0 out.mp4 | tee streams.txt
+          grep -qx 'h264,640,360' streams.txt
+          grep -qx 'aac' streams.txt
+          # One count-in bar and four bars of 4/4 at 120 bpm, plus a one-second tail.
+          d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 out.mp4)
+          awk -v d="$d" 'BEGIN { exit !(d > 10.8 && d < 11.3) }'
