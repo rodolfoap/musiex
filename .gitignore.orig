@@ -1,0 +1,11 @@
+target/
+/node_modules/
+/out/
+*.mid
+<<<<<<< HEAD
+*.abc
+*.wav
+=======
+/tools/extract-glyphs/target/
+/web/pkg/
+>>>>>>> main

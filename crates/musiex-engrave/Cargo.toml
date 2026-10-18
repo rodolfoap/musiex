@@ -1,0 +1,10 @@
+[package]
+name = "musiex-engrave"
+description = "Draws musiex exercises as single-staff scores in SVG"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+musiex-core = { path = "../musiex-core" }

@@ -1,0 +1,12 @@
+[package]
+name = "extract-glyphs"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Regenerates crates/musiex-engrave/src/glyphs.rs from the Bravura font"
+
+# Not part of the main workspace: it only runs when the glyph set changes.
+[workspace]
+
+[dependencies]
+ttf-parser = "0.25"

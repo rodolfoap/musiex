@@ -10,12 +10,27 @@ want. The same seed always gives the same exercise.
 
 ## Status
 
-Done: the generator core, and a command line tool that writes ABC notation,
-a MIDI file with a metronome track, and a WAV file. Coming next:
+Done: the generator core; a command line tool that writes ABC notation, a
+MIDI file with a metronome track, and a WAV file; and the practice screen.
+Coming next: video export (`musiex video`) from the same engraver and
+synthesizer.
 
-1. A practice screen: the score scrolls and follows the playback, all
-   controls on one screen, bars generated on the fly without limit.
-2. Video export (`musiex video`) from the same renderer and synthesizer.
+## Practice screen
+
+A web page that plays the exercise and follows along: the current note lights
+up, a cursor moves with the music, finished lines scroll away and new bars are
+generated as you go, without limit. Tempo, settings, a new exercise and a
+shareable link (settings and seed in the URL) are all on the same screen.
+Everything runs in the browser; there is no server.
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129
+./web/build.sh
+python3 -m http.server -d web 8000   # then open http://localhost:8000
+```
+
+Space plays and pauses, N starts a new exercise.
 
 ## Usage
 
@@ -54,6 +69,11 @@ comfortable range for the clef.
 - `crates/musiex-audio`: a tick-based sequencer (`Player`) that renders block
   by block and accepts tempo changes while playing, a dependency-free
   built-in synth, and SoundFont playback through rustysynth.
+- `crates/musiex-engrave`: draws systems as SVG (noteheads, stems, beams,
+  ties, tuplets, rests, accidentals, clefs, key and time signatures) and
+  reports where each note sits. Glyphs are Bravura's, embedded as paths.
+- `crates/musiex-web`: the practice screen's WebAssembly core; `web/` is the
+  page around it.
 - `crates/musiex-cli`: the `musiex` command.
 
 ## Development
@@ -67,8 +87,15 @@ cargo clippy --all-targets -- -D warnings
 intended, refresh them with `UPDATE_GOLDEN=1 cargo test -p musiex-core --test golden`.
 
 CI also generates 200 exercises across meters, keys and levels and checks them
-with abcjs (`tools/check-abc.js`).
+with abcjs (`tools/check-abc.js`), and plays the practice screen in headless
+Chromium (`tools/web-smoke.js`).
+
+`cargo run -p musiex-engrave --example svg > page.html` prints a page of
+engraved systems in several meters, keys and clefs, for checking the layout
+by eye.
 
 ## License
 
-GPL-3.0-or-later, like the original.
+GPL-3.0-or-later, like the original. The Bravura music font is © Steinberg
+Media Technologies GmbH under the SIL Open Font License 1.1
+(`crates/musiex-engrave/BRAVURA-OFL.txt`).

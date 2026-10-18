@@ -4,3 +4,5 @@ target/
 *.mid
 *.abc
 *.wav
+/tools/extract-glyphs/target/
+/web/pkg/
