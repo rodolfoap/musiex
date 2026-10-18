@@ -1,6 +1,7 @@
 //! `musiex`: generate sight-reading exercises from the command line.
 
 mod midi;
+mod video;
 mod wav;
 
 use anyhow::{Context, Result};
@@ -19,6 +20,50 @@ struct Cli {
 enum Command {
     /// Write an exercise as ABC notation and a MIDI file, and optionally a WAV file.
     Generate(GenerateArgs),
+    /// Render an exercise as an MP4 video of the scrolling score with its audio (needs ffmpeg).
+    Video(VideoArgs),
+}
+
+#[derive(Args)]
+struct VideoArgs {
+    /// Number of bars to play.
+    #[arg(short = 'n', long, default_value_t = 16)]
+    bars: usize,
+
+    /// Output file.
+    #[arg(short, long, default_value = "exercise.mp4")]
+    output: PathBuf,
+
+    /// Frame size as WIDTHxHEIGHT.
+    #[arg(long, default_value = "1280x720", value_parser = parse_size)]
+    size: (u32, u32),
+
+    /// Frames per second.
+    #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u32).range(1..=120))]
+    fps: u32,
+
+    /// Size of the score, in pixels per staff space; scaled with the frame height if omitted.
+    #[arg(long)]
+    zoom: Option<f32>,
+
+    /// General MIDI SoundFont (.sf2) for the audio; the built-in synth is used without one.
+    #[arg(long, value_name = "FILE")]
+    soundfont: Option<PathBuf>,
+
+    /// Leave the metronome click out.
+    #[arg(long)]
+    no_metronome: bool,
+
+    /// Bars of metronome before the music starts.
+    #[arg(long, default_value_t = 1)]
+    count_in: u32,
+
+    /// The ffmpeg program to encode with.
+    #[arg(long, default_value = "ffmpeg", value_name = "PATH")]
+    ffmpeg: PathBuf,
+
+    #[command(flatten)]
+    music: MusicArgs,
 }
 
 #[derive(Args)]
@@ -131,6 +176,17 @@ fn parse_range(s: &str) -> Result<(Pitch, Pitch), String> {
     Ok((lo, hi))
 }
 
+fn parse_size(s: &str) -> Result<(u32, u32), String> {
+    let bad = || format!("invalid size '{s}', expected WIDTHxHEIGHT such as 1280x720");
+    let (w, h) = s.split_once('x').ok_or_else(bad)?;
+    let (w, h): (u32, u32) = (w.parse().map_err(|_| bad())?, h.parse().map_err(|_| bad())?);
+    // H.264 in yuv420p needs even dimensions.
+    if w < 160 || h < 120 || w % 2 == 1 || h % 2 == 1 {
+        return Err(format!("{s}: the size must be even and at least 160x120"));
+    }
+    Ok((w, h))
+}
+
 fn random_seed() -> u64 {
     use std::time::{SystemTime, UNIX_EPOCH};
     let nanos = SystemTime::now()
@@ -209,8 +265,30 @@ fn generate(args: &GenerateArgs) -> Result<()> {
     Ok(())
 }
 
+fn video(args: &VideoArgs) -> Result<()> {
+    let settings = args.music.settings();
+    let generator = Generator::new(settings.clone())?;
+    let bars: Vec<_> = generator.take(args.bars.max(1)).collect();
+    let (width, height) = args.size;
+    let opt = video::Options {
+        width,
+        height,
+        fps: args.fps,
+        zoom: args.zoom.unwrap_or(height as f32 / 60.0).max(2.0),
+        metronome: !args.no_metronome,
+        count_in: args.count_in,
+        soundfont: args.soundfont.clone(),
+        ffmpeg: args.ffmpeg.clone(),
+    };
+    video::write(&args.output, &settings, &bars, &opt)?;
+    println!("wrote {}", args.output.display());
+    println!("seed {}", settings.seed);
+    Ok(())
+}
+
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Generate(args) => generate(&args),
+        Command::Video(args) => video(&args),
     }
 }

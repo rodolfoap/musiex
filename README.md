@@ -11,9 +11,8 @@ want. The same seed always gives the same exercise.
 ## Status
 
 Done: the generator core; a command line tool that writes ABC notation, a
-MIDI file with a metronome track, and a WAV file; and the practice screen.
-Coming next: video export (`musiex video`) from the same engraver and
-synthesizer.
+MIDI file with a metronome track, a WAV file and an MP4 video; and the
+practice screen.
 
 ## Practice screen
 
@@ -50,6 +49,22 @@ General MIDI SoundFont. Any ABC tool can print the
 score, for example [abcjs](https://www.abcjs.net/abcjs-editor.html) in the
 browser or `abcm2ps`.
 
+### Video
+
+```sh
+# 16 bars at 90 bpm as a 1280x720 MP4, with a one-bar count-in
+cargo run --release -p musiex-cli -- video -n 16 -t 90 -l 3 --rests -o lesson1.mp4
+```
+
+The video shows the same score as the practice screen: the current note
+lights up, a cursor follows the music, finished lines scroll away, and a thin
+bar along the bottom shows progress. The audio comes from the same synth
+(`--soundfont` works here too). `--size`, `--fps` and `--zoom` set the frame
+size, frame rate and score size. It needs `ffmpeg` on the `PATH`, or
+`--ffmpeg PATH`.
+
+### Options
+
 Options carried over from ABCMusiEx: tempo `-t`, key `-k`, clef `-c`,
 bars `-n`, level `-l` (1 halves, 2 quarters, 3 eighths, 4 sixteenths), leap
 `-d` (the old "dispersion", in staff steps), `--rests`, `--triplets`,
@@ -74,7 +89,8 @@ comfortable range for the clef.
   reports where each note sits. Glyphs are Bravura's, embedded as paths.
 - `crates/musiex-web`: the practice screen's WebAssembly core; `web/` is the
   page around it.
-- `crates/musiex-cli`: the `musiex` command.
+- `crates/musiex-cli`: the `musiex` command; `video` rasterizes the engraved
+  systems with resvg and pipes frames to ffmpeg.
 
 ## Development
 
@@ -87,8 +103,8 @@ cargo clippy --all-targets -- -D warnings
 intended, refresh them with `UPDATE_GOLDEN=1 cargo test -p musiex-core --test golden`.
 
 CI also generates 200 exercises across meters, keys and levels and checks them
-with abcjs (`tools/check-abc.js`), and plays the practice screen in headless
-Chromium (`tools/web-smoke.js`).
+with abcjs (`tools/check-abc.js`), plays the practice screen in headless
+Chromium (`tools/web-smoke.js`), and renders a short video with ffmpeg.
 
 `cargo run -p musiex-engrave --example svg > page.html` prints a page of
 engraved systems in several meters, keys and clefs, for checking the layout
