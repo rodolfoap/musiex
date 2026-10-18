@@ -1,26 +1,48 @@
 # musiex
 
-Endless sight-reading exercises. A clean rewrite of
-[ABCMusiEx](https://github.com/rodolfoap/abcmusiex) in Rust.
+**Endless sight-reading exercises that play themselves.** Pick a meter, key,
+clef and difficulty, press Play, and read along: musiex writes new bars as
+you go, plays them, and shows you where you are.
 
-musiex generates reading material on demand: you choose the meter, key,
-clef, range, smallest note value and which figures to include (rests,
-triplets, dotted pairs, ties, accidentals), and it writes as many bars as you
-want. The same seed always gives the same exercise.
+![The practice screen while playing: the current note is lit and a cursor follows the music](docs/images/practice.png)
 
-## Status
+musiex is a clean rewrite of [ABCMusiEx](https://github.com/rodolfoap/abcmusiex)
+in Rust. The original wrote a fixed number of bars to PDF and audio files;
+musiex keeps the same idea (random, readable, musically sensible exercises)
+and adds a practice screen that never runs out of music.
 
-Done: the generator core; a command line tool that writes ABC notation, a
-MIDI file with a metronome track, a WAV file and an MP4 video; and the
-practice screen.
+## Features
+
+- **Practice screen in the browser.** The current note lights up, a cursor
+  moves with the music, finished lines scroll away, and new bars appear
+  without limit. Everything runs locally in WebAssembly; there is no server.
+- **All controls on one screen.** Play, pause, restart, a new exercise, and a
+  tempo slider that works while playing. Space plays and pauses, N starts a
+  new exercise.
+- **Shareable exercises.** Settings and seed live in the link, so the same
+  link always gives the same music.
+- **Real engraving.** A small engraver written for musiex draws noteheads,
+  beams, ties, tuplets, rests, accidentals, clefs, key and time signatures
+  with the [Bravura](https://github.com/steinbergmedia/bravura) music font.
+- **Musical rules, not noise.** Rhythms follow the beat structure of simple
+  and compound meters (6/8 feels like two, 7/8 groups as 3+4), melodies move
+  in a bounded walk with a limit on leaps, accidentals respect the key, and
+  ties only land where a reader expects them.
+- **Command line tool.** Write ABC notation, MIDI with a metronome track,
+  WAV audio, or an MP4 video of the scrolling score.
+
+<table>
+<tr>
+<td width="62%"><img src="docs/images/settings.png" alt="The settings panel open over a 6/8 exercise in E flat, bass clef"></td>
+<td><img src="docs/images/phone-dark.png" alt="The practice screen on a phone in dark mode, with a triplet in 3/4"></td>
+</tr>
+<tr>
+<td>Settings: meter, key, clef, range, rhythms and playback.</td>
+<td>On a phone, in dark mode.</td>
+</tr>
+</table>
 
 ## Practice screen
-
-A web page that plays the exercise and follows along: the current note lights
-up, a cursor moves with the music, finished lines scroll away and new bars are
-generated as you go, without limit. Tempo, settings, a new exercise and a
-shareable link (settings and seed in the URL) are all on the same screen.
-Everything runs in the browser; there is no server.
 
 ```sh
 rustup target add wasm32-unknown-unknown
@@ -29,68 +51,105 @@ cargo install wasm-bindgen-cli --version 0.2.129
 python3 -m http.server -d web 8000   # then open http://localhost:8000
 ```
 
-Space plays and pauses, N starts a new exercise.
+The page is static: `web/` (with the generated `web/pkg/`) can be served
+from any web host.
 
-## Usage
+| Setting | Choices |
+| --- | --- |
+| Time | 2/4, 3/4, 4/4, 5/4, 2/2, 3/8, 6/8, 9/8, 12/8, 7/8 |
+| Key | 12 major and 9 minor keys, from six sharps to five flats |
+| Clef | treble, bass, alto, tenor |
+| Shortest note | half, quarter, eighth, sixteenth |
+| Range | lowest and highest note, or a comfortable default for the clef |
+| Largest leap | from a step up to an octave |
+| Include | rests, triplets, dotted rhythms, ties, sharps, flats |
+| Playback | metronome, count-in, score size, seed |
+
+## Command line
 
 ```sh
-cargo run --release -p musiex-cli -- generate --help
-
-# 32 bars in G major, eighth notes, with rests and triplets
-cargo run --release -p musiex-cli -- generate -k G -l 3 --rests --triplets -o lesson1
-
-# 6/8 in the bass clef, reproducible
-cargo run --release -p musiex-cli -- generate -m 6/8 -c bass -k Dm -l 3 --ties -s 1234
+cargo install --path crates/musiex-cli   # installs the `musiex` command
+musiex generate --help
+musiex video --help
 ```
 
-That writes `lesson1.abc` and `lesson1.mid`. Add `--wav` for `lesson1.wav`,
-rendered with the built-in synth or, with `--soundfont FILE.sf2`, with any
-General MIDI SoundFont. Any ABC tool can print the
-score, for example [abcjs](https://www.abcjs.net/abcjs-editor.html) in the
-browser or `abcm2ps`.
+### Scores, MIDI and audio
+
+```sh
+# 32 bars in G major, eighth notes, with rests and triplets
+musiex generate -k G -l 3 --rests --triplets -o lesson1
+
+# 6/8 in the bass clef, reproducible, with a WAV file
+musiex generate -m 6/8 -c bass -k Dm -l 3 --ties -s 1234 --wav
+```
+
+The first command writes `lesson1.abc` and `lesson1.mid`; `--wav` adds a
+WAV file, rendered with the built-in synth or, with `--soundfont FILE.sf2`,
+any General MIDI SoundFont. Any ABC tool can print the score, for example
+[abcjs](https://www.abcjs.net/abcjs-editor.html) in the browser or `abcm2ps`.
 
 ### Video
 
 ```sh
 # 16 bars at 90 bpm as a 1280x720 MP4, with a one-bar count-in
-cargo run --release -p musiex-cli -- video -n 16 -t 90 -l 3 --rests -o lesson1.mp4
+musiex video -n 16 -t 90 -l 3 --rests --ties -o lesson1.mp4
 ```
 
-The video shows the same score as the practice screen: the current note
-lights up, a cursor follows the music, finished lines scroll away, and a thin
-bar along the bottom shows progress. The audio comes from the same synth
-(`--soundfont` works here too). `--size`, `--fps` and `--zoom` set the frame
-size, frame rate and score size. It needs `ffmpeg` on the `PATH`, or
-`--ffmpeg PATH`.
+![A frame of an exported video: the playing note in orange, the cursor, and a progress bar along the bottom](docs/images/video-frame.png)
+
+The video shows the same score as the practice screen, with the same synth
+for the sound and a progress bar along the bottom. `--size`, `--fps` and
+`--zoom` set the frame size, frame rate and score size. It needs `ffmpeg` on
+the `PATH`, or `--ffmpeg PATH`.
 
 ### Options
 
-Options carried over from ABCMusiEx: tempo `-t`, key `-k`, clef `-c`,
-bars `-n`, level `-l` (1 halves, 2 quarters, 3 eighths, 4 sixteenths), leap
-`-d` (the old "dispersion", in staff steps), `--rests`, `--triplets`,
-`--dotted`, `--ties` (alias `--legato`), `--sharps`, `--flats`, `--seed`.
-The range is now given as note names, `-r C4..A5`, and defaults to a
-comfortable range for the clef.
+| Option | Meaning | Default |
+| --- | --- | --- |
+| `-n`, `--bars` | number of bars | 32 (`video`: 16) |
+| `-t`, `--tempo` | beats per minute; in 6/8 the beat is a dotted quarter | 60 |
+| `-m`, `--meter` | time signature | 4/4 |
+| `-k`, `--key` | key, e.g. `C`, `Bb`, `F#m` | C |
+| `-c`, `--clef` | treble, bass, alto or tenor | treble |
+| `-r`, `--range` | note range, e.g. `C4..A5` | depends on the clef |
+| `-l`, `--level` | shortest note: 1 half, 2 quarter, 3 eighth, 4 sixteenth | 2 |
+| `-d`, `--leap` | largest leap in staff steps (2 is a third) | 3 |
+| `--rests` `--triplets` `--dotted` `--ties` `--sharps` `--flats` | figures to include | off |
+| `-s`, `--seed` | seed for a reproducible exercise | random, printed |
+| `--count-in` | bars of metronome before the music | 1 |
+| `--no-metronome` | leave out the click | |
 
-## Layout
+Coming from ABCMusiEx: the old "dispersion" is `--leap`, `--legato` still
+works as an alias for `--ties`, and the range is now given as note names.
 
-- `crates/musiex-core`: the music model and generator, with no I/O.
-  - `generator`: an endless iterator of bars.
-  - `rhythm`: recursive bar subdivision, aware of simple and compound meters.
-  - `melody`: a bounded random walk over staff positions, key-aware
-    accidentals, ties into beats and across barlines.
-  - `abc`: ABC notation output with beaming and bar-local accidentals.
-  - `perform`: timed notes with metronome and count-in, bar by bar.
-- `crates/musiex-audio`: a tick-based sequencer (`Player`) that renders block
-  by block and accepts tempo changes while playing, a dependency-free
-  built-in synth, and SoundFont playback through rustysynth.
-- `crates/musiex-engrave`: draws systems as SVG (noteheads, stems, beams,
-  ties, tuplets, rests, accidentals, clefs, key and time signatures) and
-  reports where each note sits. Glyphs are Bravura's, embedded as paths.
-- `crates/musiex-web`: the practice screen's WebAssembly core; `web/` is the
-  page around it.
-- `crates/musiex-cli`: the `musiex` command; `video` rasterizes the engraved
-  systems with resvg and pipes frames to ffmpeg.
+## How it works
+
+```
+crates/
+  musiex-core      music model and generator, no I/O
+  musiex-audio     tick-based sequencer, built-in synth, SoundFont playback
+  musiex-engrave   SVG engraving with Bravura glyphs
+  musiex-web       the practice screen's WebAssembly core
+  musiex-cli       the musiex command
+web/               the practice page around the WebAssembly core
+tools/             glyph extraction, ABC and browser checks
+```
+
+- **Generator** (`musiex-core`): an endless iterator of bars. Rhythm comes
+  from recursive subdivision of each beat group; melody is a bounded random
+  walk over staff positions. A tiny in-tree PCG random number generator keeps
+  every seed stable across platforms and releases.
+- **Audio** (`musiex-audio`): a sequencer that renders block by block and
+  accepts tempo changes while playing, with a dependency-free synth and
+  SoundFont playback through rustysynth.
+- **Engraver** (`musiex-engrave`): lays out one system at a time, packing as
+  many bars as fit at natural spacing, and reports where each note sits so
+  the screen and the video can follow playback.
+- **Practice screen** (`musiex-web`, `web/`): asks the core for one system at
+  a time just ahead of the music, and schedules audio on the Web Audio clock
+  so sound and picture stay together.
+- **Video** (`musiex-cli`): rasterizes the engraved systems with resvg and
+  pipes frames to ffmpeg alongside the synthesized audio.
 
 ## Development
 
@@ -109,6 +168,10 @@ Chromium (`tools/web-smoke.js`), and renders a short video with ffmpeg.
 `cargo run -p musiex-engrave --example svg > page.html` prints a page of
 engraved systems in several meters, keys and clefs, for checking the layout
 by eye.
+
+To refresh the screenshots in `docs/images`, serve `web/` and take them from
+the browser; the video frame comes from `musiex video` and
+`ffmpeg -ss 9.3 -i video.mp4 -frames:v 1 frame.png`.
 
 ## License
 
