@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>musiex</title>
+  <meta name="description" content="Endless sight-reading exercises that play along with you.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>musiex</h1>
+    <div class="transport">
+      <button id="play" class="primary" title="Play or pause (Space)">Play</button>
+      <button id="restart" title="Back to the start">Restart</button>
+      <button id="new" title="A new exercise with the same settings (N)">New exercise</button>
+    </div>
+    <label class="tempo">
+      <span>Tempo</span>
+      <input id="tempo" type="range" min="30" max="240" step="1">
+      <output id="tempo-value"></output>
+    </label>
+    <button id="settings-toggle" aria-expanded="false" aria-controls="settings">Settings</button>
+  </header>
+
+  <form id="settings" class="settings" hidden>
+    <fieldset>
+      <legend>Music</legend>
+      <label>Time
+        <select name="meter">
+          <option>2/4</option><option>3/4</option><option selected>4/4</option><option>5/4</option>
+          <option>2/2</option><option>3/8</option><option>6/8</option><option>9/8</option>
+          <option>12/8</option><option>7/8</option>
+        </select>
+      </label>
+      <label>Key
+        <select name="key">
+          <option>C</option><option>G</option><option>D</option><option>A</option><option>E</option>
+          <option>B</option><option>F#</option><option>F</option><option>Bb</option><option>Eb</option>
+          <option>Ab</option><option>Db</option><option>Am</option><option>Em</option><option>Bm</option>
+          <option>F#m</option><option>C#m</option><option>Dm</option><option>Gm</option><option>Cm</option>
+          <option>Fm</option>
+        </select>
+      </label>
+      <label>Clef
+        <select name="clef">
+          <option value="treble">Treble</option><option value="bass">Bass</option>
+          <option value="alto">Alto</option><option value="tenor">Tenor</option>
+        </select>
+      </label>
+      <label>Shortest note
+        <select name="level">
+          <option value="1">Half</option><option value="2">Quarter</option>
+          <option value="3">Eighth</option><option value="4">Sixteenth</option>
+        </select>
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>Notes</legend>
+      <label>Lowest <input name="low" placeholder="clef default" size="6" pattern="[A-Ga-g][#b]?[0-9]"></label>
+      <label>Highest <input name="high" placeholder="clef default" size="6" pattern="[A-Ga-g][#b]?[0-9]"></label>
+      <label>Largest leap
+        <select name="leap">
+          <option value="1">Step</option><option value="2">Third</option><option value="3">Fourth</option>
+          <option value="4">Fifth</option><option value="5">Sixth</option><option value="7">Octave</option>
+        </select>
+      </label>
+    </fieldset>
+    <fieldset class="checks">
+      <legend>Include</legend>
+      <label><input type="checkbox" name="rests"> Rests</label>
+      <label><input type="checkbox" name="triplets"> Triplets</label>
+      <label><input type="checkbox" name="dotted"> Dotted rhythms</label>
+      <label><input type="checkbox" name="ties"> Ties</label>
+      <label><input type="checkbox" name="sharps"> Sharps</label>
+      <label><input type="checkbox" name="flats"> Flats</label>
+    </fieldset>
+    <fieldset>
+      <legend>Playback</legend>
+      <label><input type="checkbox" name="metronome"> Metronome</label>
+      <label>Count-in
+        <select name="countIn">
+          <option value="0">None</option><option value="1">1 bar</option><option value="2">2 bars</option>
+        </select>
+      </label>
+      <label>Size
+        <input name="zoom" type="range" min="7" max="16" step="1">
+      </label>
+      <label>Seed <input name="seed" type="number" min="0" max="999999"></label>
+    </fieldset>
+  </form>
+
+  <p id="error" class="error" role="alert" hidden></p>
+  <main id="score" class="score" aria-label="Score"></main>
+
+  <footer class="bar status">
+    <span id="where">Press Play to start.</span>
+    <button id="share" class="link">Copy link to this exercise</button>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
