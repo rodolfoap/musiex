@@ -17,3 +17,5 @@ midly = "0.5"
 anyhow = "1"
 musiex-audio = { path = "../musiex-audio" }
 hound = "3.5"
+resvg = { version = "0.45", default-features = false }
+musiex-engrave = { version = "0.1.0", path = "../musiex-engrave" }
