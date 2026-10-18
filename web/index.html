@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>musiex</title>
   <meta name="description" content="Endless sight-reading exercises that play along with you.">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfaf7">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#17161a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,6 +25,7 @@
       <output id="tempo-value"></output>
     </label>
     <button id="settings-toggle" aria-expanded="false" aria-controls="settings">Settings</button>
+    <button id="install" title="Install musiex on this device; it then works offline" hidden>Install app</button>
   </header>
 
   <form id="settings" class="settings" hidden>
