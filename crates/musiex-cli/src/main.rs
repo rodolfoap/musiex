@@ -1,6 +1,7 @@
 //! `musiex`: generate sight-reading exercises from the command line.
 
 mod midi;
+mod wav;
 
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
@@ -16,7 +17,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Write an exercise as ABC notation and a MIDI file.
+    /// Write an exercise as ABC notation and a MIDI file, and optionally a WAV file.
     Generate(GenerateArgs),
 }
 
@@ -33,6 +34,14 @@ struct GenerateArgs {
     /// Only write the ABC file.
     #[arg(long)]
     abc_only: bool,
+
+    /// Also render the exercise to PATH.wav.
+    #[arg(long)]
+    wav: bool,
+
+    /// General MIDI SoundFont (.sf2) for the WAV; the built-in synth is used without one.
+    #[arg(long, value_name = "FILE")]
+    soundfont: Option<PathBuf>,
 
     #[command(flatten)]
     music: MusicArgs,
@@ -183,6 +192,18 @@ fn generate(args: &GenerateArgs) -> Result<()> {
         std::fs::write(&mid_path, bytes)
             .with_context(|| format!("writing {}", mid_path.display()))?;
         println!("wrote {}", mid_path.display());
+    }
+    if args.wav {
+        let wav_path = with_extension(&args.output, "wav");
+        wav::write(
+            &wav_path,
+            &settings,
+            &bars,
+            !args.no_metronome,
+            args.count_in,
+            args.soundfont.as_deref(),
+        )?;
+        println!("wrote {}", wav_path.display());
     }
     println!("seed {}", settings.seed);
     Ok(())
