@@ -47,3 +47,26 @@ jobs:
             done
           done
       - run: node tools/check-abc.js out/*.abc crates/musiex-core/tests/golden/*.abc
+
+  web:
+    # Builds the practice screen and plays it in headless Chromium.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen@0.2.129
+      - run: ./web/build.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: Smoke-test the practice screen
+        run: |
+          python3 -m http.server -d web 8000 &
+          sleep 1
+          node tools/web-smoke.js http://localhost:8000/

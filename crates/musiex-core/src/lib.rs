@@ -10,6 +10,7 @@ pub mod generator;
 mod melody;
 pub mod meter;
 pub mod model;
+pub mod notation;
 pub mod perform;
 pub mod pitch;
 mod rhythm;

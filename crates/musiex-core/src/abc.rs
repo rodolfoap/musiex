@@ -4,11 +4,11 @@
 //! accidentals written relative to the key signature and to earlier notes in
 //! the same bar, as engraved music does.
 
-use crate::duration::{Dur, EIGHTH, QUARTER, WHOLE};
+use crate::duration::{Dur, EIGHTH, WHOLE};
 use crate::model::{Bar, Event, Note};
+use crate::notation;
 use crate::pitch::Pitch;
 use crate::settings::Settings;
-use std::collections::HashMap;
 use std::fmt::Write;
 
 /// The unit note length, `L:1/8`.
@@ -80,21 +80,15 @@ pub fn header(s: &Settings, h: &Header) -> String {
 /// Writes one bar, ending with its barline. `last` closes the piece with a
 /// final barline and drops a tie that would lead nowhere.
 pub fn bar(s: &Settings, bar: &Bar, last: bool) -> String {
-    let beat = s.meter.beat();
-    let mut accidentals: HashMap<i32, i8> = HashMap::new();
+    let mut accidentals = notation::accidentals(s.key, bar).into_iter();
     let mut note_text = |n: &Note, tie: bool| {
-        let effective = accidentals
-            .get(&n.pitch.step)
-            .copied()
-            .unwrap_or_else(|| s.key.alter_for(n.pitch.letter()));
         let mut t = String::new();
-        if n.pitch.alter != effective {
-            t.push(match n.pitch.alter {
+        if let Some(alter) = accidentals.next().flatten() {
+            t.push(match alter {
                 1 => '^',
                 -1 => '_',
                 _ => '=',
             });
-            accidentals.insert(n.pitch.step, n.pitch.alter);
         }
         t.push_str(&pitch_name(n.pitch));
         t.push_str(&length(n.dur, UNIT));
@@ -104,32 +98,25 @@ pub fn bar(s: &Settings, bar: &Bar, last: bool) -> String {
         t
     };
 
+    let joined = notation::beamed_to_previous(s.meter, &bar.events);
     let mut out = String::new();
-    let mut onset: Dur = 0;
-    let mut prev_beamable = false;
     let last_index = bar.events.len().saturating_sub(1);
     for (i, e) in bar.events.iter().enumerate() {
-        let (text, beamable) = match e {
-            Event::Note(n) => {
-                let tie = n.tie && !(last && i == last_index);
-                (note_text(n, tie), n.dur < QUARTER)
-            }
-            Event::Rest(d) => (format!("z{}", length(*d, UNIT)), false),
+        let text = match e {
+            Event::Note(n) => note_text(n, n.tie && !(last && i == last_index)),
+            Event::Rest(d) => format!("z{}", length(*d, UNIT)),
             Event::Tuplet(t) => {
                 let mut text = format!("({}", t.p);
                 for n in &t.notes {
                     text.push_str(&note_text(n, false));
                 }
-                (text, t.notes.iter().all(|n| n.dur < QUARTER))
+                text
             }
         };
-        let joined = i > 0 && beamable && prev_beamable && !onset.is_multiple_of(beat);
-        if i > 0 && !joined {
+        if i > 0 && !joined[i] {
             out.push(' ');
         }
         out.push_str(&text);
-        onset += e.dur();
-        prev_beamable = beamable;
     }
     out.push_str(if last { " |]" } else { " |" });
     out
@@ -154,7 +141,7 @@ pub fn tune(s: &Settings, h: &Header, bars: &[Bar], bars_per_line: usize) -> Str
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::duration::{HALF, SIXTEENTH};
+    use crate::duration::{HALF, QUARTER, SIXTEENTH};
 
     #[test]
     fn lengths() {
