@@ -7,6 +7,7 @@
 pub mod abc;
 pub mod duration;
 pub mod generator;
+pub mod instrument;
 mod melody;
 pub mod meter;
 pub mod model;
@@ -18,6 +19,7 @@ pub mod rng;
 pub mod settings;
 
 pub use generator::Generator;
+pub use instrument::Instrument;
 pub use meter::Meter;
 pub use model::{Bar, Event, Note, Tuplet};
 pub use pitch::{Clef, Key, ParseError, Pitch};

@@ -10,7 +10,7 @@ import init, { Practice } from './pkg/musiex_web.js';
 const DEFAULTS = {
   meter: '4/4', key: 'C', clef: 'treble', tempo: 60, level: 2, low: '', high: '',
   leap: 3, rests: false, triplets: false, dotted: false, ties: false, sharps: false,
-  flats: false, seed: 0, metronome: true, countIn: 1, zoom: 10,
+  flats: false, instrument: 'concert', seed: 0, metronome: true, countIn: 1, zoom: 10,
   names: 'off', keyboard: true, speedUp: 0,
 };
 const NUMBERS = ['tempo', 'level', 'leap', 'seed', 'countIn', 'zoom', 'speedUp'];

@@ -6,7 +6,7 @@ mod wav;
 
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
-use musiex_core::{abc, Clef, Generator, Key, Meter, Pitch, Settings};
+use musiex_core::{abc, Clef, Generator, Instrument, Key, Meter, Pitch, Settings};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -162,6 +162,11 @@ struct MusicArgs {
     #[arg(long)]
     flats: bool,
 
+    /// Transposing instrument: the score is written for it and sounds at concert
+    /// pitch. concert, bb, a, eb, f, tenor-sax, bari-sax, eb-clarinet or guitar.
+    #[arg(short, long, default_value = "concert")]
+    instrument: Instrument,
+
     /// Seed for a reproducible exercise. A random one is picked and printed if omitted.
     #[arg(short, long)]
     seed: Option<u64>,
@@ -215,6 +220,7 @@ impl MusicArgs {
             ties: self.ties,
             sharps: self.sharps,
             flats: self.flats,
+            instrument: self.instrument,
             seed: self.seed.unwrap_or_else(random_seed),
         }
     }

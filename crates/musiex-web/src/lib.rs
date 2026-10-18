@@ -32,6 +32,7 @@ pub struct Config {
     pub ties: bool,
     pub sharps: bool,
     pub flats: bool,
+    pub instrument: String,
     pub seed: u64,
     pub metronome: bool,
     pub count_in: u32,
@@ -54,6 +55,7 @@ impl Default for Config {
             ties: false,
             sharps: false,
             flats: false,
+            instrument: "concert".into(),
             seed: 0,
             metronome: true,
             count_in: 1,
@@ -87,6 +89,7 @@ impl Config {
             ties: self.ties,
             sharps: self.sharps,
             flats: self.flats,
+            instrument: self.instrument.parse().map_err(e)?,
             seed: self.seed,
         };
         s.validate().map_err(e)?;
@@ -328,6 +331,14 @@ mod tests {
         assert!(Session::new(&bad, 8000).is_err());
         let bad: Config = serde_json::from_str(r#"{"low": "C6", "high": "C4"}"#).unwrap();
         assert!(Session::new(&bad, 8000).is_err());
+        let bad: Config = serde_json::from_str(r#"{"instrument": "kazoo"}"#).unwrap();
+        assert!(Session::new(&bad, 8000).is_err());
+    }
+
+    #[test]
+    fn reads_the_instrument() {
+        let s = session(r#"{"instrument": "tenor-sax"}"#);
+        assert_eq!(s.settings().instrument, musiex_core::Instrument::TenorSax);
     }
 
     #[test]

@@ -46,6 +46,9 @@ jobs:
               done
             done
           done
+          for ins in bb eb f tenor-sax guitar; do
+            ./target/release/musiex generate -n 40 -o out/i-$ins --abc-only -i $ins -k F -l 3 -s 7
+          done
       - run: node tools/check-abc.js out/*.abc crates/musiex-core/tests/golden/*.abc
 
   web:
