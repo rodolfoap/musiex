@@ -35,6 +35,8 @@ pub struct Performer {
     bar_len: Dur,
     beat: Dur,
     metronome: bool,
+    /// Semitones from written to sounding pitch.
+    transpose: i32,
     /// Where the next bar starts.
     cursor: u64,
     /// A note whose tie continues into the next bar.
@@ -47,6 +49,7 @@ impl Performer {
             bar_len: s.meter.bar_len(),
             beat: s.meter.beat(),
             metronome,
+            transpose: s.instrument.transpose(),
             cursor: 0,
             held: None,
         }
@@ -105,7 +108,7 @@ impl Performer {
     }
 
     fn play(&mut self, n: &Note, start: u64, dur: u64, out: &mut Vec<PlayedNote>) {
-        let key = n.pitch.midi().clamp(0, 127) as u8;
+        let key = (n.pitch.midi() + self.transpose).clamp(0, 127) as u8;
         match &mut self.held {
             Some(h) if h.key == key && h.start + h.dur == start => h.dur += dur,
             _ => {
@@ -198,6 +201,31 @@ mod tests {
         assert_eq!(played.len(), 2);
         assert_eq!(played[1].start, u64::from(2 * QUARTER));
         assert_eq!(played[1].dur, u64::from(4 * QUARTER));
+    }
+
+    #[test]
+    fn transposing_instruments_sound_at_concert_pitch() {
+        let s = Settings {
+            instrument: crate::Instrument::Eb,
+            ..Settings::default()
+        };
+        let bars = vec![Bar {
+            index: 0,
+            events: vec![Event::Note(Note {
+                pitch: "C5".parse().unwrap(),
+                dur: 4 * QUARTER,
+                tie: false,
+            })],
+        }];
+        // An alto sax's written C5 sounds E flat 4.
+        let played = perform(&s, &bars, true, 0);
+        let melody: Vec<_> = played
+            .iter()
+            .filter(|n| n.channel == MELODY_CHANNEL)
+            .collect();
+        assert_eq!(melody[0].key, 63);
+        // The click does not move.
+        assert!(played.iter().any(|n| n.key == CLICK_ACCENT));
     }
 
     #[test]

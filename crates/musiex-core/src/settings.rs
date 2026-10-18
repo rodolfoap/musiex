@@ -1,6 +1,7 @@
 //! Everything that shapes an exercise.
 
 use crate::duration::{Dur, EIGHTH, HALF, QUARTER, SIXTEENTH};
+use crate::instrument::Instrument;
 use crate::meter::Meter;
 use crate::pitch::{Clef, Key, ParseError, Pitch};
 
@@ -25,6 +26,8 @@ pub struct Settings {
     pub ties: bool,
     pub sharps: bool,
     pub flats: bool,
+    /// Written for a transposing instrument: the sound follows `instrument.transpose()`.
+    pub instrument: Instrument,
     pub seed: u64,
 }
 
@@ -46,6 +49,7 @@ impl Default for Settings {
             ties: false,
             sharps: false,
             flats: false,
+            instrument: Instrument::Concert,
             seed: 0,
         }
     }
@@ -75,7 +79,14 @@ impl Settings {
                 self.low, self.high
             ));
         }
-        if !(0..=127).contains(&self.low.midi()) || !(0..=127).contains(&self.high.midi()) {
+        let t = self.instrument.transpose();
+        let sounding = [
+            self.low.midi(),
+            self.high.midi(),
+            self.low.midi() + t,
+            self.high.midi() + t,
+        ];
+        if sounding.iter().any(|m| !(0..=127).contains(m)) {
             return fail("the range must stay within MIDI notes 0 to 127".into());
         }
         if self.max_leap == 0 {

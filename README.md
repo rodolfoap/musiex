@@ -23,6 +23,10 @@ and adds a practice screen that never runs out of music.
   names under the notes (C D E or Do Re Mi), a piano keyboard that lights up
   the key being played, and a speed trainer that raises the tempo a little
   every four bars.
+- **Transposing instruments.** Pick B♭ (clarinet, trumpet, soprano or tenor
+  sax), E♭ (alto or baritone sax), F (horn), A clarinet or guitar: you read
+  the part as written for your instrument and hear it at its real pitch, so
+  it sounds just like your instrument would.
 - **Practice-friendly.** The screen stays on while the music plays, and the
   installed app remembers your settings.
 - **Shareable exercises.** Settings and seed live in the link, so the same
@@ -78,6 +82,7 @@ picks up new versions by itself.
 | Time | 2/4, 3/4, 4/4, 5/4, 2/2, 3/8, 6/8, 9/8, 12/8, 7/8 |
 | Key | 12 major and 9 minor keys, from six sharps to five flats |
 | Clef | treble, bass, alto, tenor |
+| Instrument | C (concert pitch), B♭, E♭ alto sax, B♭ tenor sax, E♭ baritone sax, F horn, A clarinet, E♭ clarinet, guitar |
 | Shortest note | half, quarter, eighth, sixteenth |
 | Range | lowest and highest note, or a comfortable default for the clef |
 | Largest leap | from a step up to an octave |
@@ -130,6 +135,7 @@ the `PATH`, or `--ffmpeg PATH`.
 | `-m`, `--meter` | time signature | 4/4 |
 | `-k`, `--key` | key, e.g. `C`, `Bb`, `F#m` | C |
 | `-c`, `--clef` | treble, bass, alto or tenor | treble |
+| `-i`, `--instrument` | `concert`, `bb`, `a`, `eb`, `f`, `tenor-sax`, `bari-sax`, `eb-clarinet` or `guitar`; also `trumpet`, `alto-sax`, `horn` and so on | concert |
 | `-r`, `--range` | note range, e.g. `C4..A5` | depends on the clef |
 | `-l`, `--level` | shortest note: 1 half, 2 quarter, 3 eighth, 4 sixteenth | 2 |
 | `-d`, `--leap` | largest leap in staff steps (2 is a third) | 3 |
@@ -137,6 +143,11 @@ the `PATH`, or `--ffmpeg PATH`.
 | `-s`, `--seed` | seed for a reproducible exercise | random, printed |
 | `--count-in` | bars of metronome before the music | 1 |
 | `--no-metronome` | leave out the click | |
+
+With a transposing instrument, the key, range and score are all written
+pitch, as on the player's part; only the sound moves. For an alto sax, `-k C`
+reads in C and sounds in E♭. The ABC file says the same with a
+`%%MIDI transpose` line.
 
 Coming from ABCMusiEx: the old "dispersion" is `--leap`, `--legato` still
 works as an alias for `--ties`, and the range is now given as note names.

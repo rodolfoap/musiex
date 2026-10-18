@@ -73,6 +73,11 @@ pub fn header(s: &Settings, h: &Header) -> String {
     let _ = writeln!(out, "M:{}", s.meter);
     let _ = writeln!(out, "L:{}", fraction(UNIT));
     let _ = writeln!(out, "Q:{}={}", fraction(s.meter.beat()), s.tempo);
+    let t = s.instrument.transpose();
+    if t != 0 {
+        // Written pitch on the page; players such as abcjs sound it transposed.
+        let _ = writeln!(out, "%%MIDI transpose {t}");
+    }
     let _ = writeln!(out, "K:{} clef={}", s.key, s.clef.name());
     out
 }
