@@ -10,13 +10,12 @@ want. The same seed always gives the same exercise.
 
 ## Status
 
-This is the first milestone: the generator core and a command line tool that
-writes ABC notation and a MIDI file with a metronome track. Coming next:
+Done: the generator core, and a command line tool that writes ABC notation,
+a MIDI file with a metronome track, and a WAV file. Coming next:
 
-1. Audio rendered with a SoundFont synthesizer.
-2. A practice screen: the score scrolls and follows the playback, all
+1. A practice screen: the score scrolls and follows the playback, all
    controls on one screen, bars generated on the fly without limit.
-3. Video export (`musiex video`) from the same renderer and synthesizer.
+2. Video export (`musiex video`) from the same renderer and synthesizer.
 
 ## Usage
 
@@ -30,7 +29,9 @@ cargo run --release -p musiex-cli -- generate -k G -l 3 --rests --triplets -o le
 cargo run --release -p musiex-cli -- generate -m 6/8 -c bass -k Dm -l 3 --ties -s 1234
 ```
 
-That writes `lesson1.abc` and `lesson1.mid`. Any ABC tool can print the
+That writes `lesson1.abc` and `lesson1.mid`. Add `--wav` for `lesson1.wav`,
+rendered with the built-in synth or, with `--soundfont FILE.sf2`, with any
+General MIDI SoundFont. Any ABC tool can print the
 score, for example [abcjs](https://www.abcjs.net/abcjs-editor.html) in the
 browser or `abcm2ps`.
 
@@ -50,6 +51,9 @@ comfortable range for the clef.
     accidentals, ties into beats and across barlines.
   - `abc`: ABC notation output with beaming and bar-local accidentals.
   - `perform`: timed notes with metronome and count-in, bar by bar.
+- `crates/musiex-audio`: a tick-based sequencer (`Player`) that renders block
+  by block and accepts tempo changes while playing, a dependency-free
+  built-in synth, and SoundFont playback through rustysynth.
 - `crates/musiex-cli`: the `musiex` command.
 
 ## Development

@@ -1,0 +1,11 @@
+[package]
+name = "musiex-audio"
+description = "Audio for musiex: a sequencer, a built-in synth and SoundFont playback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+musiex-core = { path = "../musiex-core" }
+rustysynth = "1.3"
