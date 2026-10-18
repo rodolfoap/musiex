@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/musiex-core", "crates/musiex-cli"]
+members = ["crates/musiex-core", "crates/musiex-audio", "crates/musiex-cli"]
 
 [workspace.package]
 version = "0.1.0"
