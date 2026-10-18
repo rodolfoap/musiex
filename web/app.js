@@ -109,6 +109,7 @@ async function reset() {
   systems = [];
   fillScore();
   setCurrent(0);
+  place(systems[0], 0, 0);
   updatePlayButton();
   $('where').textContent = 'Press Play to start.';
 }
