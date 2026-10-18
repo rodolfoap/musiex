@@ -69,6 +69,14 @@ function writeForm() {
     else el.value = config[el.name];
   }
   $('tempo').value = config.tempo;
+  showTempo();
+}
+
+/** Shows the tempo next to the slider and fills the slider's track up to it. */
+function showTempo() {
+  const slider = $('tempo');
+  const pct = ((config.tempo - slider.min) / (slider.max - slider.min)) * 100;
+  slider.style.setProperty('--pct', `${pct}%`);
   $('tempo-value').textContent = `${config.tempo} bpm`;
 }
 
@@ -288,7 +296,7 @@ $('new').addEventListener('click', () => {
 });
 $('tempo').addEventListener('input', (e) => {
   config.tempo = Number(e.target.value);
-  $('tempo-value').textContent = `${config.tempo} bpm`;
+  showTempo();
   if (practice) practice.setTempo(config.tempo);
   writeHash();
 });
