@@ -52,7 +52,16 @@ python3 -m http.server -d web 8000   # then open http://localhost:8000
 ```
 
 The page is static: `web/` (with the generated `web/pkg/`) can be served
-from any web host.
+from any web host. Every push to `main` publishes it with GitHub Pages at
+<https://rodolfoap.github.io/musiex/>.
+
+### On an Android phone or tablet
+
+Open the page in Chrome and tap **Install app** in the header (or "Install
+app" in Chrome's menu). musiex gets its own icon, opens full screen, and
+works offline: every file is kept on the device after the first visit, and
+exercises are generated on the device itself. When the device is online, it
+picks up new versions by itself.
 
 | Setting | Choices |
 | --- | --- |
@@ -163,7 +172,7 @@ intended, refresh them with `UPDATE_GOLDEN=1 cargo test -p musiex-core --test go
 
 CI also generates 200 exercises across meters, keys and levels and checks them
 with abcjs (`tools/check-abc.js`), plays the practice screen in headless
-Chromium (`tools/web-smoke.js`), and renders a short video with ffmpeg.
+Chromium, online and then offline (`tools/web-smoke.js`), and renders a short video with ffmpeg.
 
 `cargo run -p musiex-engrave --example svg > page.html` prints a page of
 engraved systems in several meters, keys and clefs, for checking the layout

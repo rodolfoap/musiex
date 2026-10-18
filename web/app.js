@@ -321,6 +321,30 @@ document.addEventListener('keydown', (e) => {
     $('new').click();
   }
 });
+// Installing on Android: Chrome offers the app once the offline cache is in
+// place, and the page shows its own button for it.
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  if (!/Android/i.test(navigator.userAgent)) return;
+  e.preventDefault();
+  installPrompt = e;
+  $('install').hidden = false;
+});
+$('install').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  $('install').hidden = true;
+});
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  $('install').hidden = true;
+});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
 let resizeTimer = 0;
 window.addEventListener('resize', () => {
   // Re-flow the score for the new width, but never interrupt playback.
