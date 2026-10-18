@@ -1,0 +1,10 @@
+X:1
+T:eighths_in_bass_clef
+M:3/4
+L:1/8
+Q:1/4=60
+K:Dm clef=bass
+D,2 A,,2 z A,, | F,,B,, D,G, C2 | (3B,2C2C2 A,2 | E,C, C,F, B, z |
+(3A,B,F, E,2 (3A,B,G, | D,A,, E,,2 F,,2 | z2 (3A,,C,E, F,2 | (3B,F,C, F,2 C, z |
+E,2 E,G, B,2 | z A, z F, G,G, | A,G, D,E, (3B,,C,G,, | B,,2 z2 (3D,D,C, |
+B,,2 F,, z G,,E,, | A,,2 (3E,,E,,A,, F,, z | z2 F,,2 E,,2- | E,,F,, (3G,,C,E, B,,2 |]

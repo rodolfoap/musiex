@@ -1,0 +1,17 @@
+[package]
+name = "musiex-cli"
+description = "Command line front-end for musiex"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "musiex"
+path = "src/main.rs"
+
+[dependencies]
+musiex-core = { path = "../musiex-core" }
+clap = { version = "4.5", features = ["derive"] }
+midly = "0.5"
+anyhow = "1"

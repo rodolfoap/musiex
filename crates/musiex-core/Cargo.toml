@@ -1,0 +1,9 @@
+[package]
+name = "musiex-core"
+description = "Sight-reading exercise generator: music model, generator and ABC/MIDI output"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

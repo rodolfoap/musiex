@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  abc:
+    # Cross-checks the generated scores with an independent ABC parser.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save abcjs@6.4.4
+      - name: Generate exercises in many meters, keys and levels
+        run: |
+          cargo build --release -p musiex-cli
+          mkdir -p out
+          i=0
+          for m in 2/4 3/4 4/4 5/4 3/8 6/8 7/8 9/8 12/8 2/2; do
+            for l in 1 2 3 4; do
+              for k in C G Bb F#m Eb; do
+                i=$((i+1))
+                ./target/release/musiex generate -n 40 -o out/e$i --abc-only \
+                  -m $m -l $l -k $k --rests --triplets --dotted --ties --sharps --flats -s $i
+              done
+            done
+          done
+      - run: node tools/check-abc.js out/*.abc crates/musiex-core/tests/golden/*.abc
