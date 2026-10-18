@@ -3,3 +3,4 @@ target/
 /out/
 *.mid
 *.abc
+*.wav
