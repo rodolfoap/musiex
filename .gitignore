@@ -4,5 +4,6 @@ target/
 *.mid
 *.abc
 *.wav
+*.mp4
 /tools/extract-glyphs/target/
 /web/pkg/
