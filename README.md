@@ -4,6 +4,8 @@
 clef and difficulty, press Play, and read along: musiex writes new bars as
 you go, plays them, and shows you where you are.
 
+Live app: https://rodolfoap.github.io/musiex/
+
 ![The practice screen while playing: the current note is lit and a cursor follows the music](docs/images/practice.png)
 
 musiex is a clean rewrite of [ABCMusiEx](https://github.com/rodolfoap/abcmusiex)
