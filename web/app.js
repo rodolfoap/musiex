@@ -11,10 +11,10 @@ const DEFAULTS = {
   meter: '4/4', key: 'C', clef: 'treble', tempo: 60, level: 2, low: '', high: '',
   leap: 3, rests: false, triplets: false, dotted: false, ties: false, sharps: false,
   flats: false, instrument: 'concert', seed: 0, metronome: true, countIn: 1, zoom: 10,
-  names: 'off', keyboard: true, speedUp: 0,
+  names: 'off', keyboard: 'piano', speedUp: 0,
 };
 const NUMBERS = ['tempo', 'level', 'leap', 'seed', 'countIn', 'zoom', 'speedUp'];
-const FLAGS = ['rests', 'triplets', 'dotted', 'ties', 'sharps', 'flats', 'metronome', 'keyboard'];
+const FLAGS = ['rests', 'triplets', 'dotted', 'ties', 'sharps', 'flats', 'metronome'];
 // Settings that only change what is shown, so the exercise keeps playing.
 const VIEW = ['names', 'keyboard', 'speedUp'];
 const SAVED = 'musiex-settings';
@@ -33,6 +33,11 @@ const MAX_TEMPO = 240;
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const SOLFEGE = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
 const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
+// Guitar strings from high to low, as in tablature, in written pitch: guitar
+// music is written an octave above how it sounds.
+const GUITAR_STRINGS = [76, 71, 67, 62, 57, 52];
+const GUITAR_FRETS = 15;
+const FRET_DOTS = [3, 5, 7, 9, 12, 15];
 
 const BLOCK = 2048; // samples per audio block
 const AHEAD = 0.3; // seconds of audio scheduled ahead of the clock
@@ -55,7 +60,8 @@ let started = false;
 let pumpTimer = 0;
 let lastNote = null;
 let lastName = null;
-let lastKey = null;
+let lastKeys = [];
+let lastPlayed = null;
 let lastBar = 0;
 let wakeLock = null;
 
@@ -84,6 +90,9 @@ function readHash() {
     else if (FLAGS.includes(k)) c[k] = v === '1';
     else c[k] = v;
   }
+  // Older links had the keyboard as on or off.
+  if (c.keyboard === '1') c.keyboard = 'piano';
+  if (c.keyboard === '0') c.keyboard = 'off';
   if (!params.has('seed')) c.seed = randomSeed();
   return c;
 }
@@ -154,9 +163,11 @@ async function reset() {
   started = false;
   lastNote = null;
   lastName = null;
-  lastKey = null;
+  lastKeys = [];
+  lastPlayed = null;
   lastBar = 0;
   buildKeyboard();
+  buildGuitar();
   $('score').innerHTML = '';
   systems = [];
   fillScore();
@@ -226,10 +237,15 @@ function applyView() {
   for (const span of $('score').querySelectorAll('.name')) {
     span.textContent = noteName(Number(span.dataset.letter), Number(span.dataset.alter));
   }
-  $('keyboard').hidden = !config.keyboard;
+  $('keyboard').hidden = config.keyboard !== 'piano';
+  $('guitar').hidden = config.keyboard !== 'guitar';
   for (const key of $('keyboard').querySelectorAll('.white')) {
     key.querySelector('span').textContent = noteName(Number(key.dataset.letter), 0);
   }
+  for (const open of $('guitar').querySelectorAll('.open-name')) {
+    open.textContent = noteName(Number(open.dataset.letter), 0);
+  }
+  clearLit();
 }
 
 // --- Piano keyboard ------------------------------------------------------
@@ -271,12 +287,72 @@ function buildKeyboard() {
   });
 }
 
-function lightKey(midi) {
-  const key = midi === null ? null : $('keyboard').querySelector(`[data-key="${midi}"]`);
-  if (key === lastKey) return;
-  if (lastKey) lastKey.classList.remove('lit');
-  if (key) key.classList.add('lit');
-  lastKey = key;
+// --- Guitar neck ---------------------------------------------------------
+
+/**
+ * Draws six strings and the frets up to GUITAR_FRETS, open strings at the
+ * nut on the left. Exercises that reach below the guitar's written range
+ * (bass clef) use the strings' real pitch instead, so they still fit.
+ */
+function buildGuitar() {
+  const neck = $('guitar');
+  neck.innerHTML = '';
+  const [low] = practice.keyRange();
+  const shift = low < GUITAR_STRINGS.at(-1) ? -12 : 0;
+  neck.style.setProperty('--frets', GUITAR_FRETS);
+  GUITAR_STRINGS.forEach((open, s) => {
+    for (let f = 0; f <= GUITAR_FRETS; f++) {
+      const cell = document.createElement('div');
+      cell.className = f === 0 ? 'fret nut' : 'fret';
+      if (s >= 3) cell.classList.add('low');
+      cell.style.gridRow = s + 1;
+      cell.style.gridColumn = f + 1;
+      const spot = document.createElement('span');
+      spot.className = 'spot';
+      spot.dataset.key = open + shift + f;
+      if (f === 0) {
+        const name = document.createElement('span');
+        name.className = 'open-name';
+        name.dataset.letter = WHITE_SEMITONES.indexOf((open + 120) % 12);
+        name.textContent = noteName(Number(name.dataset.letter), 0);
+        cell.appendChild(name);
+      }
+      cell.appendChild(spot);
+      neck.appendChild(cell);
+    }
+  });
+  for (let f = 1; f <= GUITAR_FRETS; f++) {
+    const n = document.createElement('div');
+    n.className = FRET_DOTS.includes(f) ? 'fret-number marked' : 'fret-number';
+    n.style.gridRow = GUITAR_STRINGS.length + 1;
+    n.style.gridColumn = f + 1;
+    n.textContent = f;
+    neck.appendChild(n);
+  }
+}
+
+function clearLit() {
+  for (const k of lastKeys) {
+    k.classList.remove('lit');
+    if (k.classList.contains('spot')) k.textContent = '';
+  }
+  lastKeys = [];
+  lastPlayed = null;
+}
+
+/** Lights the note being played: one piano key, or every place on the guitar neck that plays it. */
+function lightKey(note) {
+  const midi = note && !note.rest ? note.key : null;
+  if (midi === lastPlayed) return;
+  clearLit();
+  lastPlayed = midi;
+  if (midi === null || config.keyboard === 'off') return;
+  const area = $(config.keyboard === 'guitar' ? 'guitar' : 'keyboard');
+  for (const k of area.querySelectorAll(`[data-key="${midi}"]`)) {
+    k.classList.add('lit');
+    if (k.classList.contains('spot')) k.textContent = noteName(note.letter, note.alter);
+    lastKeys.push(k);
+  }
 }
 
 function setCurrent(index) {
@@ -427,7 +503,7 @@ function place(sys, i, frac) {
     if (name) name.classList.add('playing');
     lastName = name;
   }
-  lightKey(notes[i].key);
+  lightKey(notes[i]);
 }
 
 /** Scrolls finished systems away and engraves new ones at the bottom. */

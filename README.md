@@ -23,7 +23,8 @@ and adds a practice screen that never runs out of music.
   new exercise.
 - **Made for beginners too.** One-tap difficulty presets, optional note
   names under the notes (C D E or Do Re Mi), a piano keyboard that lights up
-  the key being played, and a speed trainer that raises the tempo a little
+  the key being played or a guitar neck that lights every place the note can
+  be played, and a speed trainer that raises the tempo a little
   every four bars.
 - **Transposing instruments.** Pick B♭ (clarinet, trumpet, soprano or tenor
   sax), E♭ (alto or baritone sax), F (horn), A clarinet or guitar: you read
@@ -44,6 +45,8 @@ and adds a practice screen that never runs out of music.
   WAV audio, or an MP4 video of the scrolling score.
 
 ![Note names under the notes and a piano keyboard lighting the key being played](docs/images/learning-aids.png)
+
+![A guitar neck under the score, with the B being played lit on four strings at once](docs/images/guitar.png)
 
 <table>
 <tr>
@@ -80,7 +83,7 @@ picks up new versions by itself.
 | Setting | Choices |
 | --- | --- |
 | Difficulty | Beginner, Easy, Medium, Hard (sets the options below in one tap) |
-| Learning aids | note names (off, C D E, Do Re Mi), keyboard, speed trainer (+2 or +5 bpm every 4 bars) |
+| Learning aids | note names (off, C D E, Do Re Mi), show a piano keyboard or a guitar neck (or nothing), speed trainer (+2 or +5 bpm every 4 bars) |
 | Time | 2/4, 3/4, 4/4, 5/4, 2/2, 3/8, 6/8, 9/8, 12/8, 7/8 |
 | Key | 12 major and 9 minor keys, from six sharps to five flats |
 | Clef | treble, bass, alto, tenor |
