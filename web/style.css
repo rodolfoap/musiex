@@ -112,7 +112,7 @@ input:invalid { border-color: var(--accent); }
 .keyboard[hidden] { display: none; }
 .keyboard {
   position: relative;
-  height: 76px;
+  height: 96px;
   margin: 10px 16px 8px;
   flex: none;
 }
@@ -133,6 +133,54 @@ input:invalid { border-color: var(--accent); }
 .key.white.lit { background: var(--accent); color: #fff; border-color: var(--accent); }
 .key.white.lit span { color: #fff; }
 .key.black.lit { background: var(--accent); }
+/* A guitar neck that lights every place the note can be played. */
+.guitar[hidden] { display: none; }
+.guitar {
+  --frets: 15;
+  display: grid;
+  grid-template-columns: 3em repeat(var(--frets), 1fr);
+  grid-template-rows: repeat(6, 22px) 16px;
+  margin: 10px 16px 6px;
+  flex: none;
+}
+.fret {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid #b7b0a3;
+  background: #d4b283;
+}
+/* The string runs through the middle of each cell, thicker for lower strings. */
+.fret::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px solid #6b655c;
+}
+.fret.low::before { border-top-width: 2px; }
+.fret.nut { background: var(--bg); border-right: 5px solid var(--fg); justify-content: flex-start; }
+.fret.nut::before { left: 1.5em; }
+.open-name { font-size: 11px; color: var(--muted); width: 1.4em; text-align: center; }
+.spot {
+  position: relative;
+  z-index: 1;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  pointer-events: none;
+}
+.fret.nut .spot { position: absolute; right: 1px; }
+.spot.lit { background: var(--accent); box-shadow: 0 0 0 2px #fffdf8; padding: 0 2px; }
+.fret-number { font-size: 10px; text-align: center; color: var(--muted); background: var(--bg); line-height: 16px; }
+.fret-number.marked { font-weight: 700; color: var(--fg); }
 .presets button { padding: 5px 12px; }
 /* A full-width tempo slider with a large thumb, easy to drag on a tablet. */
 .tempo { border-top: 1px solid var(--line); flex-wrap: nowrap; gap: 16px; padding: 6px 16px; }
